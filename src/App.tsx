@@ -120,25 +120,15 @@ function App() {
                 </div>
 
                 <div className="spotify-container">
-                  {matchedSong ? (
-                    <iframe
-                      src={`https://open.spotify.com/embed/track/${matchedSong.spotifyId}`}
-                      width="100%"
-                      height="80"
-                      frameBorder="0"
-                      allow="encrypted-media"
-                    />
-                  ) : (
-                    <a 
-                      href={`https://open.spotify.com/search/${encodeURIComponent(aiSong?.spotifySearchQuery || '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="spotify-search-link"
-                    >
-                      <Search size={16} />
-                      Listen on Spotify
-                    </a>
-                  )}
+                  <a
+                    href={`https://open.spotify.com/search/${encodeURIComponent(matchedSong?.spotifySearchQuery || aiSong?.spotifySearchQuery || '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="spotify-search-link"
+                  >
+                    <Search size={16} />
+                    Listen on Spotify
+                  </a>
                 </div>
 
                 <div className="lyrics-snippet">
