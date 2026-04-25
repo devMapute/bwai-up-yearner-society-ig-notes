@@ -43,7 +43,8 @@ interface GeminiRec {
 function sanitizeMood(input: string): string {
   return input
     .slice(0, 300)
-    .replace(/[<>{}[\]\\]/g, '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[<>{}[\]\\`$\x00-\x1F\x7F]/g, '')
     .trim()
 }
 
@@ -77,7 +78,12 @@ export async function getYearningRecommendation(mood: string): Promise<AISong> {
 
   // User input is passed as user content, not baked into the system prompt
   const result = await model.generateContent(`Mood: ${sanitizeMood(mood)}`);
-  const rec = JSON.parse(result.response.text()) as GeminiRec;
+  let rec: GeminiRec;
+  try {
+    rec = JSON.parse(result.response.text()) as GeminiRec;
+  } catch {
+    throw new Error("AI returned an unexpected response format. Please try again.");
+  }
 
   const lyrics = await fetchLyrics(rec.artist, rec.title);
 
