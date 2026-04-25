@@ -19,24 +19,15 @@ function App() {
     setAiSong(null)
 
     try {
-      // First, check local library for a perfect tag match (fast)
-      const lowerMood = mood.toLowerCase()
-      const localMatch = musicData.find(song => 
-        song.moodTags.some(tag => lowerMood.includes(tag))
-      )
-
-      if (localMatch && Math.random() > 0.4) { // 60% chance to use local if it matches perfectly
-        setMatchedSong(localMatch)
-      } else {
-        // Otherwise, ask the AI for a deeper recommendation
-        const recommendation = await getYearningRecommendation(mood)
-        setAiSong(recommendation)
-      }
+      const recommendation = await getYearningRecommendation(mood)
+      setAiSong(recommendation)
     } catch (error) {
-      console.error("Discovery failed:", error)
-      // Fallback to random local song
-      const randomSong = musicData[Math.floor(Math.random() * musicData.length)]
-      setMatchedSong(randomSong)
+      console.error("AI failed, using local fallback:", error)
+      const lowerMood = mood.toLowerCase()
+      const match = musicData.find(song =>
+        song.moodTags.some(tag => lowerMood.includes(tag))
+      ) ?? musicData[Math.floor(Math.random() * musicData.length)]
+      setMatchedSong(match)
     } finally {
       setIsLoading(false)
       setIsNoteCopied(false)

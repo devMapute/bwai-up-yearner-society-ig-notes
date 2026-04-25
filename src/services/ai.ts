@@ -1,7 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = "AIzaSyADDohkexBsk5-LQ5x2mmBRF5Qv97yYWUA";
-const genAI = new GoogleGenerativeAI(API_KEY);
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!API_KEY) {
+  console.warn("VITE_GEMINI_API_KEY is not defined. AI features will not work.");
+}
+
+const genAI = new GoogleGenerativeAI(API_KEY || "");
 
 export interface AISong {
   title: string;
@@ -12,33 +17,43 @@ export interface AISong {
   yearningInsight: string;
 }
 
-function extractJson(text: string): string {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error("No JSON found in response");
-  return text.slice(start, end + 1);
-}
-
 export async function getYearningRecommendation(mood: string): Promise<AISong> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  if (!API_KEY) {
+    throw new Error("API Key missing. Please check your .env file.");
+  }
 
-  const prompt = `You are the "UP Yearning Society AI Curator", an expert in Filipino "hugot" culture, OPM (Original Pilipino Music), and indie music that captures yearning (pananabik, pangingulila, sinta).
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-User mood: "${mood}"
+  const prompt = `
+    You are the "UP Yearning Society AI Curator", an expert in Filipino "hugot" culture, OPM (Original Pilipino Music), and indie music that captures the essence of "yearning" (pananabik, pangingulila, sinta).
+    
+    User Mood/Input: "${mood}"
+    
+    Your task:
+    1. Find a song (OPM, Indie, or International) that perfectly matches this mood.
+    2. Provide a short, poetic insight about why this song matches the "thinking" or "domain" of this specific yearning.
+    3. Generate a perfect Instagram Note snippet (max 60 characters) based on the song.
+    
+    Return ONLY a JSON object with the following structure:
+    {
+      "title": "Song Title",
+      "artist": "Artist Name",
+      "lyrics": "A short, impactful line from the lyrics",
+      "note": "The IG Note snippet",
+      "spotifySearchQuery": "artist song title",
+      "yearningInsight": "A deep, 1-2 sentence reflection on this yearning"
+    }
+  `;
 
-Find a song (OPM, indie, or international) that perfectly matches this mood. Respond ONLY with a valid JSON object — no markdown, no extra text:
-
-{
-  "title": "Song Title",
-  "artist": "Artist Name",
-  "lyrics": "A short impactful lyric line (max 100 chars)",
-  "note": "IG Note snippet (max 60 chars, can include 1 emoji)",
-  "spotifySearchQuery": "artist name song title",
-  "yearningInsight": "A poetic 1-2 sentence reflection on this yearning"
-}`;
-
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  const json = extractJson(text);
-  return JSON.parse(json) as AISong;
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    return JSON.parse(jsonStr) as AISong;
+  } catch (error) {
+    console.error("AI Generation Error:", error);
+    throw error;
+  }
 }
