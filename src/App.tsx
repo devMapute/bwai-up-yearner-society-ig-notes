@@ -76,6 +76,7 @@ function App() {
                   onChange={(e) => setMood(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && !isLoading && findSong()}
                   disabled={isLoading}
+                  maxLength={300}
                 />
                 <button className="primary-button" onClick={findSong} disabled={isLoading || !mood.trim()}>
                   {isLoading ? (
